@@ -1,0 +1,31 @@
+# Secrets / entorno
+.env
+.env.*
+!.env.example
+
+# Config local (derivada de kb.example.toml)
+kb.toml
+
+# Indice y salidas
+*.db
+*.sqlite
+digests/
+
+# MCP local
+.mcp.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Caches de herramientas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editores
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

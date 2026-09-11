@@ -1,0 +1,11 @@
+# Instalar en ~/.config/systemd/user/kb-digest.timer y habilitar con:
+#   systemctl --user enable --now kb-digest.timer
+[Unit]
+Description=kb: disparar el digest todos los dias
+
+[Timer]
+OnCalendar=*-*-* 20:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

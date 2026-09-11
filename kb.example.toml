@@ -1,0 +1,23 @@
+# Copiá a "kb.toml" y ajustá a tus carpetas. Este archivo SÍ se versiona
+# (no tiene secretos), para que el indice sea reproducible.
+
+# Cada [[sources]] es un arbol de archivos a indexar.
+[[sources]]
+path = "~/projects/roadmap"
+globs = ["**/*.md"]
+
+[[sources]]
+path = "~/.agents/skills"
+globs = ["**/*.md"]
+
+[[sources]]
+path = "~/.claude/projects/-home-loren-projects/memory"
+globs = ["**/*.md"]
+
+# Preguntas que responde `kb digest` en cada corrida programada.
+[digest]
+questions = [
+    "¿En qué etapa del roadmap estoy y cuál es la próxima tarea?",
+    "¿Qué decisiones de arquitectura tomé en los proyectos recientes?",
+    "¿Qué quedó pendiente o bloqueado?",
+]

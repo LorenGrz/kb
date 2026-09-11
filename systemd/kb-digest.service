@@ -1,0 +1,10 @@
+# Unidad de usuario. Instalar en ~/.config/systemd/user/kb-digest.service
+# (ajustá WorkingDirectory si clonaste el repo en otro lado).
+[Unit]
+Description=kb: reindexar y generar el digest
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/projects/kb
+ExecStart=/usr/bin/env uv run kb digest

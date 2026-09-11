@@ -1,0 +1,9 @@
+{
+  "//": "Copiá a .mcp.json en la raíz del repo donde quieras usar la KB desde Claude Code. Alternativa: claude mcp add kb -- uv run --project /home/loren/projects/kb kb serve",
+  "mcpServers": {
+    "kb": {
+      "command": "uv",
+      "args": ["run", "--project", "/home/loren/projects/kb", "kb", "serve"]
+    }
+  }
+}
