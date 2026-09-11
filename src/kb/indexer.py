@@ -19,9 +19,36 @@ from pathlib import Path
 from kb.chunking import chunk_text
 from kb.config import Config, Source
 from kb.embeddings import Embedder
+from kb.obsidian import preparar_texto
 from kb.store import Store
 
 log = logging.getLogger("kb.indexer")
+
+# Archivos .md que en realidad no son prosa: dibujos de Excalidraw guardados
+# como nota (JSON gigante embebido) no aportan nada al embedding.
+_SUFIJOS_IGNORADOS = (".excalidraw.md",)
+
+# Se excluyen siempre, sin importar `excluir` en kb.toml: dependencias y
+# carpetas de config/cache que arrastran cientos de README/CHANGELOG ajenos
+# si una fuente apunta a la raiz de un repo (ver leccion en el README).
+_CARPETAS_SIEMPRE_EXCLUIDAS = frozenset(
+    {
+        "node_modules",
+        ".git",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "dist",
+        "build",
+        ".next",
+        ".turbo",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".obsidian",
+        ".trash",
+    }
+)
 
 
 @dataclass
@@ -36,6 +63,12 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _excluido(archivo: Path, raiz: Path, nombres_excluidos: tuple[str, ...]) -> bool:
+    excluidos = _CARPETAS_SIEMPRE_EXCLUIDAS | set(nombres_excluidos)
+    partes_relativas = archivo.relative_to(raiz).parts[:-1]  # solo carpetas, no el archivo
+    return any(parte in excluidos for parte in partes_relativas)
+
+
 def _descubrir(fuentes: tuple[Source, ...]) -> dict[str, Path]:
     """Mapa {ruta_absoluta_str: Path} de todo lo que matchea las fuentes."""
     encontrados: dict[str, Path] = {}
@@ -46,8 +79,13 @@ def _descubrir(fuentes: tuple[Source, ...]) -> dict[str, Path]:
             continue
         for patron in fuente.globs:
             for archivo in raiz.glob(patron):
-                if archivo.is_file():
-                    encontrados[str(archivo.resolve())] = archivo
+                if not archivo.is_file():
+                    continue
+                if archivo.name.endswith(_SUFIJOS_IGNORADOS):
+                    continue
+                if _excluido(archivo, raiz, fuente.excluir):
+                    continue
+                encontrados[str(archivo.resolve())] = archivo
     return encontrados
 
 
@@ -65,7 +103,11 @@ def reindex(cfg: Config, store: Store, embedder: Embedder, *, rebuild: bool = Fa
         if previo and previo[0] == sha and not rebuild:
             continue  # sin cambios
 
-        fragmentos = chunk_text(archivo.read_text(encoding="utf-8", errors="replace"))
+        crudo = archivo.read_text(encoding="utf-8", errors="replace")
+        # Limpieza de sintaxis Obsidian (frontmatter, wikilinks): no-op sobre
+        # markdown comun, asi que se aplica siempre a los .md.
+        texto = preparar_texto(archivo.stem, crudo) if archivo.suffix == ".md" else crudo
+        fragmentos = chunk_text(texto)
         if not fragmentos:
             store.replace_file(ruta, sha, archivo.stat().st_mtime, [])
             continue

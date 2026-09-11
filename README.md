@@ -8,14 +8,15 @@
 > - **MCP** → esas mismas funciones expuestas como herramientas para Claude Code / Desktop.
 
 Caso de uso: apuntás `kb` a tus carpetas de notas (roadmap, skills, memory, READMEs
-de proyectos) y después preguntás en lenguaje natural desde la terminal o desde
-Claude Code, con respuestas ancladas en *tus* archivos.
+de proyectos, **vault de Obsidian**) y después preguntás en lenguaje natural desde
+la terminal o desde Claude Code (vía MCP), con respuestas ancladas en *tus* archivos.
 
 ## Dónde vive cada concepto
 
 | Concepto | Archivo | Función clave | Qué mirar |
 |---|---|---|---|
-| **Automatización** (indexado incremental, idempotente) | `src/kb/indexer.py` | `reindex()` | detección de cambios por `sha256`, borrado de huérfanos, `rebuild` |
+| **Automatización** (indexado incremental, idempotente) | `src/kb/indexer.py` | `reindex()` | detección de cambios por `sha256`, borrado de huérfanos, `rebuild`, exclusión de `node_modules`/`.git`/etc. |
+| Limpieza de sintaxis Obsidian | `src/kb/obsidian.py` | `preparar_texto()` | saca frontmatter YAML, aplana `[[wikilinks]]`/`![[embeds]]`, antepone el título del archivo |
 | Corte de documentos en fragmentos | `src/kb/chunking.py` | `chunk_text()` | tamaño objetivo + solapamiento, por qué importa |
 | **RAG · retrieval** | `src/kb/rag.py` | `retrieve()` | embedding de la query + coseno (producto punto) top-k, todo con numpy |
 | **RAG · generation** | `src/kb/rag.py` | `answer()` / `_armar_prompt()` | cómo se arma el prompt con el contexto y se pide citar fuentes |
@@ -72,6 +73,31 @@ cp .env.example .env           # opcional: solo si vas a usar `ask` o el backend
 | `KB_CONFIG_PATH` | `kb.toml` | archivo de fuentes/preguntas |
 | `GEMINI_API_KEY` | — | solo `ask` / `digest` / backend gemini |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | modelo de generación |
+
+## Notas de Obsidian como fuente
+
+Un vault de Obsidian es, para `kb`, una carpeta más de `.md` — `kb.example.toml`
+ya trae un `[[sources]]` apuntando a uno. No hace falta marcar nada como
+"modo Obsidian": `src/kb/obsidian.py` limpia la sintaxis propia antes de
+trocear y es un no-op sobre markdown común:
+
+- saca el frontmatter YAML (`--- ... ---` al inicio);
+- aplana `[[Nota]]`, `[[Nota|alias]]`, `[[Nota#sección]]` a su texto visible;
+- reemplaza `![[adjunto]]` por una referencia corta (no sigue el link);
+- si el cuerpo no empieza con un `#`, antepone el nombre del archivo como
+  título — muchas notas de plantilla tienen el dato específico en el *nombre*
+  y el cuerpo es genérico.
+
+`.obsidian/` y `.trash/` se excluyen siempre (junto con `node_modules`, `.git`,
+etc.). Lo específico de tu vault —como una carpeta de plantillas— se excluye
+por nombre con `excluir` en el `[[sources]]` correspondiente:
+
+```toml
+[[sources]]
+path = "~/Documents/obsidian/tu-vault"
+globs = ["**/*.md"]
+excluir = ["Templates"]
+```
 
 ## Uso
 
@@ -141,6 +167,11 @@ uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run
   `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dims).
 - `tomllib` (stdlib) es solo lectura y es estricto: `[[sources]]` no admite un
   `sources = []` antes.
+- **Una fuente apuntando a la raíz de un repo indexa `node_modules`.** Pasó en
+  la primera corrida real: `~/projects/roadmap` con `**/*.md` trajo 463 READMEs
+  y CHANGELOGs de dependencias (520 archivos vistos, la mayoría ruido). Se
+  arregló excluyendo siempre `node_modules`, `.git`, `.venv`, `dist`, etc. —
+  no confiar en que el usuario se acuerde de excluirlos a mano en cada fuente.
 
 ## Próximos pasos
 

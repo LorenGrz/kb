@@ -44,10 +44,15 @@ class Settings(BaseSettings):
 
 @dataclass(frozen=True)
 class Source:
-    """Un arbol de archivos a indexar y los patrones que se leen dentro."""
+    """Un arbol de archivos a indexar y los patrones que se leen dentro.
+
+    `excluir` son nombres de carpeta (no patrones glob) a saltear en
+    cualquier nivel: util para `.obsidian`, `Templates`, `.trash`, etc.
+    """
 
     root: Path
     globs: tuple[str, ...] = ("**/*.md", "**/*.txt")
+    excluir: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -66,7 +71,8 @@ def _load_toml(path: Path) -> tuple[tuple[Source, ...], tuple[str, ...]]:
     for entrada in data.get("sources", []):
         root = Path(entrada["path"]).expanduser()
         globs = tuple(entrada.get("globs", ("**/*.md", "**/*.txt")))
-        fuentes.append(Source(root=root, globs=globs))
+        excluir = tuple(entrada.get("excluir", ()))
+        fuentes.append(Source(root=root, globs=globs, excluir=excluir))
 
     preguntas = tuple(data.get("digest", {}).get("questions", []))
     return tuple(fuentes), preguntas

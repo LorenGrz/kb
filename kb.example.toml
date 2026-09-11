@@ -14,6 +14,14 @@ globs = ["**/*.md"]
 path = "~/.claude/projects/-home-loren-projects/memory"
 globs = ["**/*.md"]
 
+# Vault de Obsidian: son .md comunes, `kb` limpia frontmatter/wikilinks solo.
+# ".obsidian" y ".trash" ya se excluyen siempre (ver indexer.py); acá solo
+# hace falta lo especifico de este vault, como la carpeta de plantillas.
+[[sources]]
+path = "~/Documents/obsidian/loren"
+globs = ["**/*.md"]
+excluir = ["Templates"]
+
 # Preguntas que responde `kb digest` en cada corrida programada.
 [digest]
 questions = [
