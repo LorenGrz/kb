@@ -29,3 +29,23 @@ __pycache__/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Secretos adicionales
+*.pem
+*.key
+*credentials*.json
+*secret*.json
+
+# Build / cobertura
+dist/
+build/
+out/
+coverage/
+.coverage
+htmlcov/
+
+# Logs / caches
+*.log
+.cache/
+tmp/
+Thumbs.db
