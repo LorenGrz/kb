@@ -67,15 +67,20 @@ def _armar_prompt(pregunta: str, hits: list[Hit]) -> str:
     return f"CONTEXTO:\n{contexto}\n\nPREGUNTA: {pregunta}"
 
 
-@con_reintentos(Exception)
 def _generar(cfg: Config, prompt: str) -> str:
+    # Falta de API key es un error de configuracion, no una falla transitoria:
+    # se chequea ANTES del retry, si no tenacity lo reintenta 3 veces al pedo.
+    if not cfg.settings.gemini_api_key:
+        raise RuntimeError("`ask` necesita GEMINI_API_KEY (la busqueda sola no).")
+    return _llamar_gemini(cfg, prompt)
+
+
+@con_reintentos(Exception)
+def _llamar_gemini(cfg: Config, prompt: str) -> str:
     from google import genai
     from google.genai import types
 
     s = cfg.settings
-    if not s.gemini_api_key:
-        raise RuntimeError("`ask` necesita GEMINI_API_KEY (la busqueda sola no).")
-
     cliente = genai.Client(api_key=s.gemini_api_key)
     resp = cliente.models.generate_content(
         model=s.gemini_model,

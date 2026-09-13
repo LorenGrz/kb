@@ -43,8 +43,12 @@ def _cmd_search(args: argparse.Namespace) -> int:
 
 def _cmd_ask(args: argparse.Namespace) -> int:
     cfg = load_config()
-    with Store(cfg.settings.kb_db_path) as store:
-        resp = answer(cfg, store, get_embedder(cfg), args.question, k=args.k)
+    try:
+        with Store(cfg.settings.kb_db_path) as store:
+            resp = answer(cfg, store, get_embedder(cfg), args.question, k=args.k)
+    except RuntimeError as e:  # config o API caida: mensaje, no traceback
+        print(f"error: {e}", file=sys.stderr)
+        return 1
     print(resp.text)
     print("\nFuentes:")
     for s in resp.sources:
@@ -61,8 +65,12 @@ def _cmd_serve(_args: argparse.Namespace) -> int:
 
 def _cmd_digest(_args: argparse.Namespace) -> int:
     cfg = load_config()
-    with Store(cfg.settings.kb_db_path) as store:
-        destino = generar_digest(cfg, store, get_embedder(cfg))
+    try:
+        with Store(cfg.settings.kb_db_path) as store:
+            destino = generar_digest(cfg, store, get_embedder(cfg))
+    except RuntimeError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
     print(destino)
     return 0
 
