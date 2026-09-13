@@ -137,7 +137,7 @@ Local, sin depender de GitHub Actions ni de una VM encendida.
 uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest
 ```
 
-15 tests, todos offline (usan un `FakeEmbedder`, no bajan modelos ni llaman APIs).
+29 tests, todos offline (usan un `FakeEmbedder`, no bajan modelos ni llaman APIs).
 
 ## Decisiones de arquitectura
 

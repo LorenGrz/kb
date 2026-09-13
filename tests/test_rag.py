@@ -64,3 +64,21 @@ def test_answer_arma_contexto_y_cita_fuentes(
     assert "CONTEXTO:" in capturado["prompt"]
     assert "PREGUNTA: donde duerme el gato" in capturado["prompt"]
     assert len(resp.sources) == len(set(resp.sources))  # sin duplicados
+
+
+def test_generar_sin_api_key_no_reintenta(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Falta de API key es config, no una falla transitoria: debe fallar de una."""
+    llamadas = 0
+
+    def fake_llamar(_cfg: Config, _prompt: str) -> str:
+        nonlocal llamadas
+        llamadas += 1
+        return ""
+
+    monkeypatch.setattr(rag, "_llamar_gemini", fake_llamar)
+    cfg = Config(settings=Settings(gemini_api_key=None), sources=())
+
+    with pytest.raises(RuntimeError, match="GEMINI_API_KEY"):
+        rag._generar(cfg, "un prompt")
+
+    assert llamadas == 0  # ni siquiera se intento la llamada
